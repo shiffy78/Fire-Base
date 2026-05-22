@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <h1>Welcome to Dashboard</h1>
+    <button id="signOut">Sign Out</button>
+    <button id="delacc">Delete Account</button>
+    <div id="currentUser"></div>
+
+    <input type="text" placeholder="product name" id="productName">
+    <input type="text" placeholder="product price" id="productPrice">
+    <input type="text" placeholder="product image" id="productImg">
+    <input type="text" placeholder="product quantity" id="productQuan">
+    <button id="subProd">submit</button>
+        <a href="admin.html">Admin Dashboard</a>
+
+    
+        <div id="prods"></div>
+
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+        import { onAuthStateChanged, getAuth, signOut, deleteUser } 
+        from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDZuVUrXeYYLno9Kzh-Y_mCYXiOUeNotLo",
+            authDomain: "aprilfire-3d877.firebaseapp.com",
+            projectId: "aprilfire-3d877",
+            storageBucket: "aprilfire-3d877.firebasestorage.app",
+            databaseURL: "https://aprilfire-3d877-default-rtdb.europe-west1.firebasedatabase.app",
+            messagingSenderId: "1091334765498",
+            appId: "1:1091334765498:web:896471e9574dc77af63b83"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const db = getDatabase();
+
+        let prodIndex;
+
+
+
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is signed in, see docs for a list of available properties
+                // https://firebase.google.com/docs/reference/js/auth.user
+                const uid = user.uid;
+                // ...
+
+                console.log(uid);
+                console.log(user);
+                console.log(auth.currentUser);
+                
+                
+
+            } else {
+                window.location.href = "/index.html"
+            }
+
+
+            document.getElementById("signOut").addEventListener("click", () => {
+
+                signOut(auth).then(() => {
+                    window.location.href = "/"
+                }).catch((error) => {
+                    // An error happened.
+                });
+            })
+        });
+
+        document.getElementById("delacc").addEventListener("click", () => {
+            const user = auth.currentUser;
+            console.log(user);
+
+            deleteUser(auth.currentUser).then(() => {
+                alert("user deleted from account");
+                window.location.href = "/"
+            }).catch((error) => {
+                console.log(error);
+                
+                alert("error deleting user from account");
+            });
+
+        })
+
+        let convUser= JSON.parse(localStorage.getItem("user"))
+
+        document.getElementById("currentUser").innerHTML=`<div>
+            <img src="${convUser.picture}" width="100px" height="100px">
+            <h1>${convUser.fullname}</h1>
+            <h1>${convUser.email}</h1>
+            <h1>${convUser.id}</h1>
+        </div>`
+
+        document.getElementById("subProd").addEventListener("click", () => {
+            const db = getDatabase();
+            const dbRef = ref(db, `/products/${prodIndex}`);
+
+            let storedProd= {
+                prodName:productName.value,
+                prodImg:productImg.value,
+                prodPrice:productPrice.value,
+                prodQuan:productQuan.value,
+                id: auth.currentUser.uid,
+                email: auth.currentUser.email
+            }
+
+            set(dbRef, storedProd)
+            
+            });
+
+            const dbRef = ref(db, `/products`)
+            onValue(dbRef, (snapshot) => {
+                const data = snapshot.val();
+                console.log(data);
+
+                if(!data){
+                    prodIndex=0
+                    console.log("nothing in db");
+                }else{
+                    prodIndex=data.length;
+                    prods.innerHTML="";
+                    data.map((_, idx)=>{
+                        if(auth.currentUser.email == _.email){
+                            prods.innerHTML+=`
+                            <div>
+                                <img src="${_.productImage}" alt="Product Image" width="100" height="100">
+                                <p>${_.prodName}</p>
+                                <p>${_.prodPrice}</p>
+                                <p>${_.prodQuan}</p>
+                            </div>
+
+                            <button>edit</button>
+                            <button>delete</button>
+                        `
+
+
+                        }else{
+                        prods.innerHTML+=`
+                        <div>
+                                <img src="${_.productImage}" alt="Product Image" width="100" height="100">
+                                <p>${_.prodName}</p>
+                                <p>${_.prodPrice}</p>
+                                <p>${_.prodQuan}</p>
+                            </div>
+                        `
+                        }
+                    })
+
+                    
+                }
+            });
+        
+    </script>
+</body>
+
+</html>

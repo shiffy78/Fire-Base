@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <link rel="stylesheet" href="index.css">
+    <style>
+        .profile-section{max-width:600px;margin:28px auto;}
+        .profile-card{background:#111;border-radius:12px;padding:40px;text-align:center;}
+        .profile-avatar{width:140px;height:140px;border-radius:12px;object-fit:cover;margin:0 auto 24px;display:block;background:#222;}
+        .profile-name{font-size:28px;margin:0 0 8px;color:#fff;}
+        .profile-email,.profile-id{color:#bbb;margin:8px 0;font-size:16px;}
+        .profile-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:28px;}
+        .profile-actions .btn{padding:12px 20px;border-radius:8px;border:none;cursor:pointer;font-weight:bold;}
+        .profile-actions .btn.primary{background:#8b5cf6;color:#fff;}
+        .profile-actions .btn.secondary{background:#222;color:#fff;border:1px solid #8b5cf6;}
+        .profile-actions .btn:hover{opacity:0.9;}
+    </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <h2>SHIFFY MART ENTERPRISE</h2>
+    </div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <div class="nav-btns">
+      <a href="buyerdashboard.html" style="padding:10px 20px;background:#222;color:white;text-decoration:none;border-radius:8px;">Buyer Dashboard</a>
+      <a href="sellerdashboard.html" style="padding:10px 20px;background:#222;color:white;text-decoration:none;border-radius:8px;">Seller Dashboard</a>
+    </div>
+  </header>
+
+  <section class="profile-section">
+    <div class="profile-card">
+      <img id="profilePic" class="profile-avatar" src="https://via.placeholder.com/140" alt="avatar">
+      <h2 class="profile-name" id="profileName">Not signed in</h2>
+      <p class="profile-email" id="profileEmail"></p>
+      <p class="profile-id" id="profileId"></p>
+
+      <div class="profile-actions">
+        <!-- <button id="buyerDash" class="btn secondary">Buyer Dashboard</button>
+        <button id="sellerDash" class="btn secondary">Seller Dashboard</button> -->
+        <button id="signOutBtn" class="btn primary">Sign Out</button>
+      </div>
+    </div>
+  </section>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCsTmvrLR0HVnbaGUaYZ_yLrfcNevfaZTs",
+            authDomain: "may-project-16ddf.firebaseapp.com",
+            projectId: "may-project-16ddf",
+            storageBucket: "may-project-16ddf.firebasestorage.app",
+            messagingSenderId: "222286807201",
+            appId: "1:222286807201:web:66cd70b45f3957fd36f0e0"
+        };
+
+        // UI refs
+        const profilePic = document.getElementById('profilePic');
+        const profileName = document.getElementById('profileName');
+        const profileEmail = document.getElementById('profileEmail');
+        const profileId = document.getElementById('profileId');
+        const signOutBtn = document.getElementById('signOutBtn');
+        const buyerDash = document.getElementById('buyerDash');
+        const sellerDash = document.getElementById('sellerDash');
+
+        function render(userObj){
+            if (!userObj){
+                profilePic.src = 'https://via.placeholder.com/140';
+                profileName.textContent = 'Not signed in';
+                profileEmail.textContent = '';
+                profileId.textContent = '';
+                return;
+            }
+            profilePic.src = userObj.picture || 'https://via.placeholder.com/140';
+            profileName.textContent = userObj.fullname || userObj.displayName || '';
+            profileEmail.textContent = userObj.email || '';
+            profileId.textContent = userObj.id ? ('ID: ' + userObj.id) : '';
+        }
+
+        // Try localStorage first
+        const stored = localStorage.getItem('user');
+        const parsed = stored ? JSON.parse(stored) : null;
+        if (parsed) render(parsed);
+
+        // Initialize Firebase and sync if not in storage
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (user){
+                const minimal = { fullname: user.displayName || (user.email ? user.email.split('@')[0] : ''), email: user.email || '', picture: user.photoURL || 'https://via.placeholder.com/140', id: user.uid };
+                try { localStorage.setItem('user', JSON.stringify(minimal)); } catch(e){ console.warn('localStorage set failed', e); }
+                render(minimal);
+            } else {
+                if (!parsed) render(null);
+            }
+        });
+
+        // Buttons
+        // if (buyerDash) buyerDash.addEventListener('click', () => { window.location.href = './buyerdashboard.html'; });
+        // if (sellerDash) sellerDash.addEventListener('click', () => { window.location.href = './sellerdashboard.html'; });
+
+        signOutBtn.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+            } catch (e) {
+                // maybe not signed in via firebase but still clear local data
+                console.warn('SignOut error', e);
+            }
+            try { localStorage.removeItem('user'); } catch(e){/*ignore*/}
+            window.location.href = './loginpage.html';
+        });
+    </script>
+
+</body>
+</html>

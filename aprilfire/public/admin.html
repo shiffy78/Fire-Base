@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<h1 id="adminName">Welcome to Admin</h1>
+<body>
+        <script type="module">
+
+         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+  import {getAuth, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDZuVUrXeYYLno9Kzh-Y_mCYXiOUeNotLo",
+    authDomain: "aprilfire-3d877.firebaseapp.com",
+    projectId: "aprilfire-3d877",
+    storageBucket: "aprilfire-3d877.firebasestorage.app",
+    messagingSenderId: "1091334765498",
+    appId: "1:1091334765498:web:896471e9574dc77af63b83"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth();
+
+  const adminDetails = "LyjiMWlPJlRUMj5zaxP55Qmmh932"
+
+
+  onAuthStateChanged(auth, (user) => {
+  if (user && adminDetails===user.uid) {
+    document.getElementById("adminName").innerHTML=`${user.displayName}`;
+
+  }else
+    window.location.href="/dashboard.html";
+  });
+    </script>
+</body>
+</html>

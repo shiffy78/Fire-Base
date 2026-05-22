@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f5f5f5;
+        }
+
+        .container {
+            width: 380px;
+            background: white;
+            padding: 35px 30px;
+            border-radius: 18px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .top {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .icon {
+            width: 70px;
+            height: 70px;
+            margin: auto;
+            border-radius: 50%;
+            background: #f2eaff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            color: #7b2cff;
+            margin-bottom: 15px;
+        }
+
+        .top h2 {
+            font-size: 30px;
+            color: #111;
+            margin-bottom: 6px;
+        }
+
+        .top p {
+            color: #777;
+            font-size: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 14px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            outline: none;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: #7b2cff;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(to right, #7b2cff, #933bff);
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            opacity: 0.95;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* TOGGLE OPTIONS AT BOTTOM */
+
+        .role-options {
+            display: flex;
+            justify-content: start;
+            gap: 30px;
+            margin-top: 25px;
+            margin-bottom: 25px;
+        }
+
+        .role-options label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            color: #444;
+        }
+
+        .role-options input[type="radio"] {
+            accent-color: #7b2cff;
+            width: 16px;
+            height: 16px;
+        }
+
+        .bottom {
+            text-align: center;
+            margin-top: 22px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .bottom a {
+            color: #7b2cff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .bottom2 {
+            display: flex;
+            justify-content: space-between;
+            text-align: center;
+            margin-top: 22px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .bottom2 a {
+            color: #7b2cff;
+            text-decoration: none;
+            font-weight: bold;
+            margin-right: 40px;
+            margin-top: 10px;
+            font-size: 19px;
+        }
+
+        .bottom2 svg {
+            width: 24px;
+            height: 24px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="top">
+            <div class="icon">👤</div>
+            <h2>LOGIN TO YOUR ACCOUNT</h2>
+            <p>Login to your marketplace account</p>
+        </div>
+
+        <div class="role-options">
+
+            <label>
+                <input type="radio" name="role" checked onclick="showBuyer()">
+                Buyer
+            </label>
+
+            <label>
+                <input type="radio" name="role" onclick="showSeller()">
+                Seller
+            </label>
+
+        </div>
+
+        <!-- BUYER FORM -->
+        <form id="buyerForm">
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="Enter your email">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="input password">
+            </div>
+
+            <!-- <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <input type="password" id="confirmPassword" placeholder="Confirm password">
+            
+        </div> -->
+
+            <button id="buyerSignIn" type="button" class="btn">Sign In as Buyer</button>
+
+            <div class="bottom2">
+                <a href="#" id="googleInBuyer"> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"
+                        width="40" height="40">
+                        <path fill="#EA4335"
+                            d="M24 9.5c3.54 0 6.69 1.22 9.19 3.6l6.85-6.85C35.91 2.38 30.36 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+
+                        <path fill="#4285F4"
+                            d="M46.98 24.55c0-1.57-.14-3.09-.4-4.55H24v9.02h12.94c-.56 2.98-2.25 5.5-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+
+                        <path fill="#FBBC05"
+                            d="M10.54 28.59A14.5 14.5 0 0 1 9.5 24c0-1.6.28-3.14.77-4.59l-7.98-6.19A23.93 23.93 0 0 0 0 24c0 3.77.9 7.34 2.51 10.41l8.03-5.82z" />
+
+                        <path fill="#34A853"
+                            d="M24 48c6.36 0 11.7-2.09 15.6-5.7l-7.73-6c-2.15 1.45-4.92 2.3-7.87 2.3-6.26 0-11.57-4.22-13.46-9.91l-8.03 5.82C6.51 42.62 14.62 48 24 48z" />
+                    </svg>
+                    Google</a>
+
+
+                <a href="#" id="signgithubBuyer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="black">
+
+                        <path
+                            d="M12 .5C5.65.5.5 5.65.5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2.02c-3.2.69-3.88-1.54-3.88-1.54-.52-1.32-1.28-1.67-1.28-1.67-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.69 1.25 3.34.95.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.71 0-1.26.45-2.3 1.19-3.11-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.19 1.19a11.1 11.1 0 0 1 5.8 0c2.22-1.5 3.19-1.19 3.19-1.19.63 1.59.23 2.76.11 3.05.74.81 1.19 1.85 1.19 3.11 0 4.44-2.69 5.41-5.25 5.7.41.36.77 1.08.77 2.18v3.23c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z" />
+                    </svg>
+                    GitHub</a>
+
+            </div>
+
+        </form>
+
+        <!-- SELLER FORM -->
+        <form id="sellerForm" class="hidden">
+
+            <div class="form-group">
+                <label for="businessEmail">Business Email</label>
+                <input type="email" id="businessEmail" placeholder="Enter business email">
+            </div>
+
+            <div class="form-group">
+                <label for="sellerPassword">Password</label>
+                <input type="password" id="sellerPassword" placeholder="input password">
+            </div>
+
+            <button id="sellerSignIn" class="btn" type="button">Sign In as Seller</button>
+
+            <div class="bottom2">
+                <a href="#" id="googleInSeller"> <svg xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 48 48" width="40" height="40">
+                        <path fill="#EA4335"
+                            d="M24 9.5c3.54 0 6.69 1.22 9.19 3.6l6.85-6.85C35.91 2.38 30.36 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+
+                        <path fill="#4285F4"
+                            d="M46.98 24.55c0-1.57-.14-3.09-.4-4.55H24v9.02h12.94c-.56 2.98-2.25 5.5-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+
+                        <path fill="#FBBC05"
+                            d="M10.54 28.59A14.5 14.5 0 0 1 9.5 24c0-1.6.28-3.14.77-4.59l-7.98-6.19A23.93 23.93 0 0 0 0 24c0 3.77.9 7.34 2.51 10.41l8.03-5.82z" />
+
+                        <path fill="#34A853"
+                            d="M24 48c6.36 0 11.7-2.09 15.6-5.7l-7.73-6c-2.15 1.45-4.92 2.3-7.87 2.3-6.26 0-11.57-4.22-13.46-9.91l-8.03 5.82C6.51 42.62 14.62 48 24 48z" />
+                    </svg>
+                    Google</a>
+
+
+                <a href="#" id="githubsignSeller">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="black">
+
+                        <path
+                            d="M12 .5C5.65.5.5 5.65.5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2.02c-3.2.69-3.88-1.54-3.88-1.54-.52-1.32-1.28-1.67-1.28-1.67-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.69 1.25 3.34.95.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.71 0-1.26.45-2.3 1.19-3.11-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.19 1.19a11.1 11.1 0 0 1 5.8 0c2.22-1.5 3.19-1.19 3.19-1.19.63 1.59.23 2.76.11 3.05.74.81 1.19 1.85 1.19 3.11 0 4.44-2.69 5.41-5.25 5.7.41.36.77 1.08.77 2.18v3.23c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z" />
+                    </svg>
+                    GitHub</a>
+
+            </div>
+
+        </form>
+
+        <!-- TOGGLE AT BOTTOM -->
+
+
+        <div class="bottom">
+            Don't have an account? <a href="registerpage.html">Register</a>
+
+        </div>
+
+    </div>
+
+    <script>
+
+        const buyerForm = document.getElementById("buyerForm");
+        const sellerForm = document.getElementById("sellerForm");
+
+        function showBuyer() {
+            buyerForm.classList.remove("hidden");
+            sellerForm.classList.add("hidden");
+        }
+
+        function showSeller() {
+            sellerForm.classList.remove("hidden");
+            buyerForm.classList.add("hidden");
+        }
+
+    </script>
+
+    <script type="module">
+        import User from "./user.js"
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+        import { GoogleAuthProvider, getAuth, signInWithPopup, signInWithEmailAndPassword, GithubAuthProvider } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCsTmvrLR0HVnbaGUaYZ_yLrfcNevfaZTs",
+            authDomain: "may-project-16ddf.firebaseapp.com",
+            databaseURL: "https://may-project-16ddf-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "may-project-16ddf",
+            storageBucket: "may-project-16ddf.firebasestorage.app",
+            messagingSenderId: "222286807201",
+            appId: "1:222286807201:web:66cd70b45f3957fd36f0e0"
+        };
+
+        const provider = new GoogleAuthProvider();
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+        const githubProvider = new GithubAuthProvider();
+
+        // Handle Google login for buyer form
+        const buyerGoogleButton = document.getElementById("googleInBuyer");
+        if (buyerGoogleButton) {
+            buyerGoogleButton.addEventListener("click", async (event) => {
+                event.preventDefault();
+                signInWithPopup(auth, provider)
+                    .then(async (result) => {
+                        const credential = GoogleAuthProvider.credentialFromResult(result);
+                        const token = credential.accessToken;
+                        const user = result.user;
+                        const localUser = new User(user.displayName || (user.email ? user.email.split('@')[0] : ''), user.email || '', user.photoURL || 'https://via.placeholder.com/100', user.uid);
+                        localUser.saveUser();
+                        try {
+                            await set(ref(db, `users/${user.uid}`), {
+                                fullname: user.displayName || (user.email ? user.email.split('@')[0] : ''),
+                                email: user.email || '',
+                                picture: user.photoURL || 'https://via.placeholder.com/100',
+                                id: user.uid,
+                                role: 'buyer'
+                            });
+                            console.log('Google buyer user written to DB:', user.uid);
+                        } catch (e) {
+                            console.error('failed to write buyer to db', e);
+                        }
+                        window.location.href = "./buyerdashboard.html"
+                    }).catch((error) => {
+                        console.error(error.message);
+                        alert("Google login failed: " + error.message);
+                    });
+            });
+        };
+
+        // Handle Google login for seller form
+        const sellerGoogleButton = document.getElementById("googleInSeller");
+        if (sellerGoogleButton) {
+            sellerGoogleButton.addEventListener("click", async (event) => {
+
+                event.preventDefault();
+                signInWithPopup(auth, provider)
+                    .then(async (result) => {
+                        const credential = GoogleAuthProvider.credentialFromResult(result);
+                        const token = credential.accessToken;
+                        const user = result.user;
+                        const localUser = new User(user.displayName || (user.email ? user.email.split('@')[0] : ''), user.email || '', user.photoURL || 'https://via.placeholder.com/100', user.uid);
+                        localUser.saveUser();
+                        try {
+                            await set(ref(db, `users/${user.uid}`), {
+                                fullname: user.displayName || (user.email ? user.email.split('@')[0] : ''),
+                                email: user.email || '',
+                                picture: user.photoURL || 'https://via.placeholder.com/100',
+                                id: user.uid,
+                                role: 'seller'
+                            });
+                            console.log('Google seller user written to DB:', user.uid);
+                        } catch (e) {
+                            console.error('failed to write seller to db', e);
+                        }
+                        window.location.href = "./sellerdashboard.html"
+                    }).catch((error) => {
+                        console.error(error.message);
+                        alert("Google login failed: " + error.message);
+                    });
+            });
+        };
+
+        document.getElementById("sellerSignIn").addEventListener("click", async () => {
+
+  const emailDetails = document.getElementById("businessEmail").value;
+
+  const passwordDetails = document.getElementById("sellerPassword").value;
+
+  signInWithEmailAndPassword(auth, emailDetails, passwordDetails)
+
+    .then(async (userCredential) => {
+
+                        const user = userCredential.user;
+        const localUser = new User(user.displayName || (user.email ? user.email.split('@')[0] : ''), user.email || '', user.photoURL || 'https://via.placeholder.com/100', user.uid);
+        localUser.saveUser();
+        try {
+            await set(ref(db, `users/${user.uid}`), {
+                fullname: user.displayName || (user.email ? user.email.split('@')[0] : ''),
+                email: user.email || '',
+                picture: user.photoURL || 'https://via.placeholder.com/100',
+                id: user.uid,
+                role: 'seller'
+            });
+            console.log('Seller email signin written to DB:', user.uid);
+        } catch (e) {
+            console.error('failed to write seller to db', e);
+        }
+
+        window.location.href = "./sellerdashboard.html";
+
+    })
+
+  .catch((error) => {
+
+    console.log(error.message);
+
+    alert("Invalid email or password");
+
+  });
+
+});
+
+        document.getElementById("buyerSignIn").addEventListener("click", async () => {
+
+  const emailDetails = document.getElementById("email").value;
+
+  const passwordDetails = document.getElementById("password").value;
+
+  signInWithEmailAndPassword(auth, emailDetails, passwordDetails)
+
+    .then(async (userCredential) => {
+
+        const user = userCredential.user;
+        const localUser = new User(user.displayName || (user.email ? user.email.split('@')[0] : ''), user.email || '', user.photoURL || 'https://via.placeholder.com/100', user.uid);
+        localUser.saveUser();
+        try {
+            await set(ref(db, `users/${user.uid}`), {
+                fullname: user.displayName || (user.email ? user.email.split('@')[0] : ''),
+                email: user.email || '',
+                picture: user.photoURL || 'https://via.placeholder.com/100',
+                id: user.uid,
+                role: 'buyer'
+            });
+            console.log('Buyer email signin written to DB:', user.uid);
+        } catch (e) {
+            console.error('failed to write buyer to db', e);
+        }
+
+        window.location.href = "./buyerdashboard.html";
+
+    })
+
+  .catch((error) => {
+
+    console.log(error.message);
+
+    alert("Invalid email or password");
+
+  });
+
+});
+
+        // Handle GitHub login for buyer form
+        const buyerGithubButton = document.getElementById("signgithubBuyer");
+        if (buyerGithubButton) {
+            buyerGithubButton.addEventListener("click", async (event) => {
+
+                event.preventDefault();
+                signInWithPopup(auth, githubProvider)
+                    .then(async (result) => {
+                        const credential = GithubAuthProvider.credentialFromResult(result);
+                        const token = credential.accessToken;
+                        const user = result.user;
+                        const localUser = new User(user.displayName || (user.email ? user.email.split('@')[0] : ''), user.email || '', user.photoURL || 'https://via.placeholder.com/100', user.uid);
+                        localUser.saveUser();
+                        try {
+                            await set(ref(db, `users/${user.uid}`), {
+                                fullname: user.displayName || (user.email ? user.email.split('@')[0] : ''),
+                                email: user.email || '',
+                                picture: user.photoURL || 'https://via.placeholder.com/100',
+                                id: user.uid,
+                                role: 'buyer'
+                            });
+                            console.log('GitHub buyer user written to DB:', user.uid);
+                        } catch (e) {
+                            console.error('failed to write GitHub buyer to db', e);
+                        }
+                        window.location.href = "./buyerdashboard.html";
+                    }).catch((error) => {
+                        console.error(error.message);
+                        alert("GitHub login failed: " + error.message);
+                    });
+            });
+        };
+
+        // Handle GitHub login for seller form
+        const sellerGithubButton = document.getElementById("githubsignSeller");
+        if (sellerGithubButton) {
+            sellerGithubButton.addEventListener("click", async (event) => {
+
+                event.preventDefault();
+                signInWithPopup(auth, githubProvider)
+                    .then(async (result) => {
+                        const credential = GithubAuthProvider.credentialFromResult(result);
+                        const token = credential.accessToken;
+                        const user = result.user;
+                        const localUser = new User(user.displayName || (user.email ? user.email.split('@')[0] : ''), user.email || '', user.photoURL || 'https://via.placeholder.com/100', user.uid);
+                        localUser.saveUser();
+                        try {
+                            await set(ref(db, `users/${user.uid}`), {
+                                fullname: user.displayName || (user.email ? user.email.split('@')[0] : ''),
+                                email: user.email || '',
+                                picture: user.photoURL || 'https://via.placeholder.com/100',
+                                id: user.uid,
+                                role: 'seller'
+                            });
+                            console.log('GitHub seller user written to DB:', user.uid);
+                        } catch (e) {
+                            console.error('failed to write GitHub seller to db', e);
+                        }
+                        window.location.href = "./sellerdashboard.html";
+                    }).catch((error) => {
+                        console.error(error.message);
+                        alert("GitHub login failed: " + error.message);
+                    });
+            });
+        };
+
+    </script>
+
+</body>
+
+</html>

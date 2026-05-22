@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    <h1>Welcome to myblog</h1>
+     <script type="module">
+
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+  import {onAuthStateChanged, getAuth, signOut} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDZuVUrXeYYLno9Kzh-Y_mCYXiOUeNotLo",
+    authDomain: "aprilfire-3d877.firebaseapp.com",
+    projectId: "aprilfire-3d877",
+    storageBucket: "aprilfire-3d877.firebasestorage.app",
+    messagingSenderId: "1091334765498",
+    appId: "1:1091334765498:web:896471e9574dc77af63b83"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth();
+
+
+  onAuthStateChanged(auth, (user) => {
+  if (user) {
+    // User is signed in, see docs for a list of available properties
+    // https://firebase.google.com/docs/reference/js/auth.user
+    const uid = user.uid;
+    // ...
+
+    console.log(uid);
+    
+  } else {
+   window.location.href="/index.html"
+  }
+});
+</script>
+</body>
+</html>

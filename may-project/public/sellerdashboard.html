@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Dashboard</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">
+            <h2>SHIFFY MART ENTERPRISE</h2>
+        </div>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="contact.html">Contact</a>
+        </nav>
+        <div class="nav-btns">
+            <button id="viewProfile" class="login">Profile</button>
+            <button id="signOut" class="signup">Sign Out</button>
+        </div>
+    </header>
+
+    <section class="products">
+        <div class="section-title"><h2>Manage Products</h2></div>
+
+        
+        <div style="margin:12px 0;background:#111;padding:12px;border-radius:10px;">
+            <input id="prodName" type="text" placeholder="Enter product name">
+            <input id="prodPrice" type="number" placeholder="Enter product price">
+            <input id="prodImg" type="text" placeholder="Enter product image URL">
+            <input id="prodQuan" type="number" placeholder="Enter product quantity">
+            <button id="addProd">Add Product</button>
+        </div>
+
+        <div id="currentUser"></div>
+        <div style="margin:12px 0;">
+            <input id="searchInput" placeholder="Search products by name or seller" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;">
+        </div>
+
+        <div class="product-grid" id="prods"></div>
+
+
+
+   
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+        import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCsTmvrLR0HVnbaGUaYZ_yLrfcNevfaZTs",
+            authDomain: "may-project-16ddf.firebaseapp.com",
+            databaseURL: "https://may-project-16ddf-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "may-project-16ddf",
+            storageBucket: "may-project-16ddf.firebasestorage.app",
+            messagingSenderId: "222286807201",
+            appId: "1:222286807201:web:66cd70b45f3957fd36f0e0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        const prodNameInput = document.getElementById('prodName');
+        const prodPriceInput = document.getElementById('prodPrice');
+        const prodImgInput = document.getElementById('prodImg');
+        const prodQuanInput = document.getElementById('prodQuan');
+        const prods = document.getElementById('prods');
+        const addProdButton = document.getElementById('addProd');
+        const searchInput = document.getElementById('searchInput');
+
+        let latestProducts = {};
+
+        let editingKey = null;
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = "/index.html";
+                return;
+            }
+
+            document.getElementById("signOut").addEventListener("click", () => {
+                signOut(auth).then(() => {
+                    window.location.href = "/";
+                }).catch((error) => {
+                    console.error(error);
+                });
+            });
+            // Ensure localStorage has a minimal user profile so dashboards show info
+            try {
+                const localUser = { fullname: user.displayName || (user.email ? user.email.split('@')[0] : ''), email: user.email || '', picture: user.photoURL || 'https://via.placeholder.com/100', id: user.uid };
+                localStorage.setItem('user', JSON.stringify(localUser));
+                document.getElementById("currentUser").innerHTML = `<div>
+                    <img src="${localUser.picture}" width="100px" height="100px">
+                    <h1>${localUser.fullname}</h1>
+                    <h1>${localUser.email}</h1>
+                    <h1>${localUser.id}</h1>
+                </div>`;
+            } catch (e) {
+                console.warn('Could not set local user from auth state', e);
+            }
+        });
+
+        function clearForm() {
+            prodNameInput.value = '';
+            prodPriceInput.value = '';
+            prodImgInput.value = '';
+            prodQuanInput.value = '';
+            editingKey = null;
+            addProdButton.textContent = 'Add Product';
+        }
+
+        addProdButton.addEventListener('click', () => {
+            const user = auth.currentUser;
+            if (!user) {
+                alert('Please sign in first.');
+                return;
+            }
+
+            const productKey = editingKey || Date.now().toString();
+            const dbRef = ref(db, `/products/${productKey}`);
+            const storedProd = {
+                prodName: prodNameInput.value,
+                prodImg: prodImgInput.value,
+                prodPrice: prodPriceInput.value,
+                prodQuan: prodQuanInput.value,
+                id: user.uid,
+                email: user.email
+            };
+
+            set(dbRef, storedProd).then(() => {
+                clearForm();
+            }).catch((error) => {
+                console.error(error);
+                alert('Unable to save product.');
+            });
+        });
+
+
+        const convUserRaw = localStorage.getItem("user");
+        const convUser = convUserRaw ? JSON.parse(convUserRaw) : null;
+        if (convUser) {
+            document.getElementById("currentUser").innerHTML = `<div>
+                <img src="${convUser.picture || 'https://via.placeholder.com/100'}" width="100px" height="100px">
+                <h1>${convUser.fullname || ''}</h1>
+                <h1>${convUser.email || ''}</h1>
+                <h1>${convUser.id || ''}</h1>
+            </div>`;
+        } else {
+            document.getElementById("currentUser").innerHTML = `<div>No user information available</div>`;
+        }
+
+        // wire profile button
+        const vp = document.getElementById('viewProfile');
+        if (vp) vp.addEventListener('click', () => { window.location.href = './profile.html'; });
+
+        prods.addEventListener('click', (event) => {
+            const button = event.target.closest('button');
+            if (!button || !button.dataset.action) return;
+            const key = button.dataset.key;
+            if (!key) return;
+
+            if (button.dataset.action === 'edit') {
+                const item = JSON.parse(button.dataset.item);
+                prodNameInput.value = item.prodName || '';
+                prodPriceInput.value = item.prodPrice || '';
+                prodImgInput.value = item.prodImg || '';
+                prodQuanInput.value = item.prodQuan || '';
+                editingKey = key;
+                addProdButton.textContent = 'Update Product';
+                return;
+            }
+
+            if (button.dataset.action === 'delete') {
+                if (!confirm('Delete this product?')) return;
+                const dbRef = ref(db, `/products/${key}`);
+                remove(dbRef).catch((error) => {
+                    console.error(error);
+                    alert('Unable to delete product.');
+                });
+            }
+        });
+
+        const productsRef = ref(db, `/products`);
+        onValue(productsRef, (snapshot) => {
+            latestProducts = snapshot.val() || {};
+            renderProducts(searchInput ? searchInput.value : '');
+        });
+
+        function renderProducts(query) {
+            const q = (query || '').toLowerCase().trim();
+            const items = Object.entries(latestProducts || {});
+            if (items.length === 0) {
+                prods.innerHTML = '<p>No products yet.</p>';
+                return;
+            }
+
+            const filtered = q ? items.filter(([k, item]) => {
+                const name = (item.prodName || '').toLowerCase();
+                const seller = (item.email || '').toLowerCase();
+                return name.includes(q) || seller.includes(q);
+            }) : items;
+
+            if (filtered.length === 0) {
+                prods.innerHTML = '<p>No matching products.</p>';
+                return;
+            }
+
+            prods.innerHTML = '';
+            filtered.forEach(([key, item]) => {
+                const isOwner = auth.currentUser && auth.currentUser.email === item.email;
+                prods.innerHTML += `
+                    <div class="product-card">
+                        <img src="${item.prodImg || ''}" alt="Product Image">
+                        <h4>${item.prodName || ''}</h4>
+                        <p>${item.prodPrice ? 'N ' + item.prodPrice : ''}</p>
+                        <div>Quantity: ${item.prodQuan || ''}</div>
+                        ${isOwner ? `
+                            <div style="margin-top:8px;"><button data-action="edit" data-key="${key}" data-item='${JSON.stringify(item).replace(/'/g, "&#39;")}'>edit</button>
+                            <button data-action="delete" data-key="${key}">delete</button></div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+        }
+
+        if (searchInput) searchInput.addEventListener('input', (e) => renderProducts(e.target.value));
+    </script>
+</body>
+
+</html>
