@@ -136,7 +136,7 @@ nav a:hover{
 .features{
     margin-top: 25px;
     display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+    grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
     gap: 20px;
 }
 
@@ -178,7 +178,7 @@ nav a:hover{
 
 .category-grid{
     display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(150px,1fr));
+    grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
     gap: 20px;
 }
 

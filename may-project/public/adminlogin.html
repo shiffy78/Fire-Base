@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0f172a;
+            color: #fff;
+        }
+
+        .container {
+            width: 380px;
+            background: #111827;
+            padding: 35px 30px;
+            border-radius: 18px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+            border: 1px solid #334155;
+        }
+
+        .top {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .icon {
+            width: 70px;
+            height: 70px;
+            margin: auto;
+            border-radius: 50%;
+            background: #7c3aed;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            color: #fff;
+            margin-bottom: 15px;
+        }
+
+        .top h2 {
+            font-size: 28px;
+            color: #f8fafc;
+            margin-bottom: 6px;
+        }
+
+        .top p {
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 14px;
+            color: #cbd5e1;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            background: #0f172a;
+            color: #fff;
+            outline: none;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus {
+            border-color: #7c3aed;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(90deg, #8b5cf6, #6366f1);
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            opacity: 0.95;
+        }
+
+        .message {
+            margin-top: 18px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.error {
+            background: #7f1d1d;
+            color: #fee2e2;
+        }
+
+        .message.success {
+            background: #14532d;
+            color: #d1fae5;
+        }
+
+        .footer {
+            margin-top: 18px;
+            text-align: center;
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: #8b5cf6;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="top">
+            <div class="icon">A</div>
+            <h2>Admin Login</h2>
+            <p>Only authorized administrators may access this dashboard.</p>
+        </div>
+
+        <div class="form-group">
+            <label for="adminEmail">Email</label>
+            <input type="email" id="adminEmail" placeholder="Enter admin email" autocomplete="username">
+        </div>
+
+        <div class="form-group">
+            <label for="adminPassword">Password</label>
+            <input type="password" id="adminPassword" placeholder="Enter password" autocomplete="current-password">
+        </div>
+
+        <button id="adminLoginBtn" class="btn" type="button">Login</button>
+
+        <div id="message" class="message"></div>
+
+        <div class="footer">
+            <p>Return to <a href="index.html">home</a></p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCsTmvrLR0HVnbaGUaYZ_yLrfcNevfaZTs",
+            authDomain: "may-project-16ddf.firebaseapp.com",
+            databaseURL: "https://may-project-16ddf-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "may-project-16ddf",
+            storageBucket: "may-project-16ddf.firebasestorage.app",
+            messagingSenderId: "222286807201",
+            appId: "1:222286807201:web:66cd70b45f3957fd36f0e0"
+        };
+
+        const ADMIN_EMAILS = ['admin@shiffy.com', 'shiffy78@gmail.com'];
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        const emailInput = document.getElementById('adminEmail');
+        const passwordInput = document.getElementById('adminPassword');
+        const loginButton = document.getElementById('adminLoginBtn');
+        const messageBox = document.getElementById('message');
+
+        function showMessage(text, type = 'error') {
+            messageBox.textContent = text;
+            messageBox.className = `message ${type}`;
+            messageBox.style.display = 'block';
+        }
+
+        function clearMessage() {
+            messageBox.style.display = 'none';
+            messageBox.textContent = '';
+        }
+
+        async function handleAdminLogin() {
+            clearMessage();
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!email || !password) {
+                showMessage('Please enter your admin email and password.', 'error');
+                return;
+            }
+
+            if (!ADMIN_EMAILS.includes(email)) {
+                showMessage('This account is not authorized for admin access.', 'error');
+                return;
+            }
+
+            loginButton.disabled = true;
+            loginButton.textContent = 'Signing in...';
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                if (!ADMIN_EMAILS.includes(user.email)) {
+                    await signOut(auth);
+                    showMessage('Your account is not allowed to access admin features.', 'error');
+                    loginButton.disabled = false;
+                    loginButton.textContent = 'Login';
+                    return;
+                }
+
+                showMessage('Login successful. Redirecting...', 'success');
+                window.location.href = './adminpage.html';
+            } catch (error) {
+                console.error('Admin login error:', error);
+                const message = error.message || 'Login failed. Please try again.';
+                showMessage(message, 'error');
+                loginButton.disabled = false;
+                loginButton.textContent = 'Login';
+            }
+        }
+
+        loginButton.addEventListener('click', handleAdminLogin);
+    </script>
+</body>
+
+</html>

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buyer Account</title>
     <link rel="stylesheet" href="index.css">
+    <script src="https://js.paystack.co/v1/inline.js"></script>
 </head>
 
 <body>
@@ -26,13 +27,12 @@
     </header>
 
     <section class="products">
-        <div id="currentUser"></div>
         <div class="section-title">
             <h2>Available Products</h2>
         </div>
         <div style="margin:12px 0;">
-            <input id="searchInput" placeholder="Search products by name or seller"
-                style="width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;">
+            <input id="searchInput" placeholder="Search products by name"
+                style="width:20%;padding:10px;border-radius:8px;border:1px solid #ccc;">
         </div>
         <div class="product-grid" id="prods"></div>
         <div id="cart" style="margin-top:24px; border-top:1px solid #ccc; padding-top:16px;">
@@ -136,7 +136,6 @@
                 try {
                     const localUser = { fullname: user.displayName || (user.email ? user.email.split('@')[0] : ''), email: user.email || '', picture: user.photoURL || 'https://via.placeholder.com/100', id: user.uid };
                     localStorage.setItem('user', JSON.stringify(localUser));
-                    document.getElementById('currentUser').innerHTML = `<div>\n                <img src="${localUser.picture}" width="100px" height="100px">\n                <h1>${localUser.fullname}</h1>\n                <h1>${localUser.email}</h1>\n                <h1>${localUser.id}</h1>\n            </div>`;
                 } catch (e) { console.warn('localStorage set failed', e); }
 
                 renderCart();
@@ -155,14 +154,9 @@
             const convUserRaw = localStorage.getItem('user');
             const convUser = convUserRaw ? JSON.parse(convUserRaw) : null;
             if (convUser) {
-                document.getElementById("currentUser").innerHTML = `<div>
-                <img src="${convUser.picture || 'https://via.placeholder.com/100'}" width="100px" height="100px">
-                <h1>${convUser.fullname || ''}</h1>
-                <h1>${convUser.email || ''}</h1>
-                <h1>${convUser.id || ''}</h1>
-            </div>`;
+                // User profile is stored in localStorage for other pages, but not rendered here.
             } else {
-                document.getElementById("currentUser").innerHTML = `<div>No user information available</div>`;
+                // No profile display needed on buyer dashboard.
             }
 
             document.getElementById("viewProfile").addEventListener('click', () => { window.location.href = './profile.html'; });
@@ -175,6 +169,31 @@
                     alert('Error signing out.');
                 });
             });
+
+            function payWithPaystack(amountKobo, email) {
+                return new Promise((resolve, reject) => {
+                    if (typeof PaystackPop === 'undefined') {
+                        reject(new Error('Paystack SDK not loaded.'));
+                        return;
+                    }
+
+                    const handler = PaystackPop.setup({
+                        key: 'pk_test_f1a48ecec4052c9e5576c3b546613f669d9d2d9f',
+                        email: email,
+                        amount: amountKobo,
+                        currency: 'NGN',
+                        ref: `SHIFFY_${Math.floor(Math.random() * 1000000000)}`,
+                        callback: function(response) {
+                            resolve(response);
+                        },
+                        onClose: function() {
+                            reject(new Error('Payment window closed.'));
+                        }
+                    });
+
+                    handler.openIframe();
+                });
+            }
 
             async function handleCheckout() {
                 if (cart.length === 0) {
@@ -197,8 +216,26 @@
                     }
                 }
 
-                // Update quantities in database
+                const totalAmount = cart.reduce((sum, item) => {
+                    const price = parseFloat(item.prodPrice) || 0;
+                    const quantity = Number(item.quantity) || 0;
+                    return sum + price * quantity;
+                }, 0);
+
+                const user = auth.currentUser;
+                const buyerEmail = user?.email || (convUser?.email || '');
+                if (!buyerEmail) {
+                    alert('Buyer email is required for payment.');
+                    return;
+                }
+
+                const amountKobo = Math.round(totalAmount * 100);
+                checkoutBtn.disabled = true;
+                checkoutBtn.textContent = 'Processing payment...';
+
                 try {
+                    await payWithPaystack(amountKobo, buyerEmail);
+
                     for (const item of cart) {
                         const product = latestProducts[item.id];
                         const currentQuantity = Number(product.prodQuan) || 0;
@@ -210,13 +247,16 @@
                         });
                     }
 
-                    alert('Checkout complete! Product quantities have been updated.');
+                    alert('Payment successful! Your order is complete.');
                     cart = [];
                     saveCart();
                     renderCart();
                 } catch (error) {
-                    console.error('Checkout failed', error);
-                    alert('Checkout failed. Please try again.');
+                    console.error('Payment or checkout failed', error);
+                    alert(error?.message || 'Payment failed. Please try again.');
+                } finally {
+                    checkoutBtn.disabled = false;
+                    checkoutBtn.textContent = 'Checkout';
                 }
             }
 
@@ -251,7 +291,6 @@
                         <h4>${item.prodName || 'No name'}</h4>
                         <p>${item.prodPrice ? 'N ' + item.prodPrice : ''}</p>
                         <div>Quantity: ${item.prodQuan || '0'}</div>
-                        <div>Seller: ${item.email || 'Unknown'}</div>
                         <div style="margin-top:8px;"><button data-key="${key}" ${available ? '' : 'disabled'} style="padding:8px 12px;">${available ? 'Add to Cart' : 'Sold out'}</button></div>
                     </div>
                 `;
