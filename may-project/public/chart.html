@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Selected Chart</title>
+    <link rel="stylesheet" href="index.css">
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <style>
+        .chart-view-container { max-width: 800px; margin: 40px auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .chart-item-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 15px 0; border-bottom: 1px solid #eee; }
+        .chart-item-info { display: flex; align-items: center; gap: 14px; }
+        .chart-item-image { width: 72px; height: 72px; object-fit: contain; background: #f8f8f8; border-radius: 8px; flex: 0 0 72px; }
+        .chart-item-actions { display: flex; align-items: center; gap: 10px; }
+        .quantity-controls { display: flex; align-items: center; gap: 8px; }
+        .quantity-btn { width: 30px; height: 30px; border: 1px solid #ddd; border-radius: 4px; background: #f8f8f8; color: #222; cursor: pointer; font-weight: bold; }
+        .quantity-value { min-width: 24px; text-align: center; color: #222; font-weight: bold; }
+        .remove-btn { background: #dc3545; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; }
+        .back-btn { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #007bff; font-weight: bold; }
+
+        @media (max-width: 520px) {
+            .chart-item-row { align-items: flex-start; flex-direction: column; }
+            .chart-item-actions { width: 100%; justify-content: space-between; }
+            .chart-item-image { width: 58px; height: 58px; flex-basis: 58px; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">
+            <h2>SHIFFY MART ENTERPRISE</h2>
+        </div>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="contact.html">Contact</a>
+        </nav>
+    </header>
+
+    <main class="chart-view-container">
+        <a href="buyerdashboard.html" class="back-btn">← Back to Store</a>
+        <h2>Items in Your Chart</h2>
+        
+        <div id="cartItems"></div>
+        
+        <div style="margin-top: 30px; text-align: right; border-top: 2px solid #ddd; padding-top: 20px;">
+            <h3 id="cartTotal" style="margin-bottom: 15px;">Total: N0</h3>
+            <button id="checkoutBtn" type="button" style="padding:12px 24px; background:#28a745; color:white; border:none; border-radius:6px; font-size:16px; cursor:pointer;">Proceed to Checkout</button>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+        import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCsTmvrLR0HVnbaGUaYZ_yLrfcNevfaZTs",
+            authDomain: "may-project-16ddf.firebaseapp.com",
+            databaseURL: "https://may-project-16ddf-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "may-project-16ddf",
+            storageBucket: "may-project-16ddf.firebasestorage.app",
+            messagingSenderId: "222286807201",
+            appId: "1:222286807201:web:66cd70b45f3957fd36f0e0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        const cartItems = document.getElementById('cartItems');
+        const cartTotal = document.getElementById('cartTotal');
+        const checkoutBtn = document.getElementById('checkoutBtn');
+
+        let cart = JSON.parse(localStorage.getItem('buyerCart') || '[]');
+
+        function cleanPrice(value) {
+            return String(value || '').replace(/,/g, '').replace(/[^\d.]/g, '');
+        }
+
+        function priceNumber(value) {
+            return Number(cleanPrice(value)) || 0;
+        }
+
+        function formatPrice(value) {
+            const cleaned = cleanPrice(value);
+            if (!cleaned) return '';
+            const parts = cleaned.split('.');
+            const whole = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return parts.length > 1 ? `${whole}.${parts.slice(1).join('')}` : whole;
+        }
+
+        function saveCart() {
+            localStorage.setItem('buyerCart', JSON.stringify(cart));
+        }
+
+        function renderCart() {
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<p style="padding: 20px 0; color: #666;">Your chart is currently empty.</p>';
+                cartTotal.textContent = 'Total: N0';
+                checkoutBtn.style.display = 'none';
+                return;
+            }
+            checkoutBtn.style.display = 'inline-block';
+            let total = 0;
+            cartItems.innerHTML = '';
+            
+            cart.forEach((item, index) => {
+                const price = priceNumber(item.prodPrice);
+                const quantity = Number(item.quantity) || 1;
+                total += price * quantity;
+                
+                cartItems.innerHTML += `
+                    <div class="chart-item-row">
+                        <div class="chart-item-info">
+                            <img class="chart-item-image" src="${item.prodImg || 'https://via.placeholder.com/72'}" alt="${item.prodName || 'Product'}">
+                            <div>
+                                <strong style="font-size: 16px;">${item.prodName || 'Product'}</strong><br>
+                                <span style="color: #555;">N${formatPrice(price)} × ${quantity}</span>
+                            </div>
+                        </div>
+                        <div class="chart-item-actions">
+                            <div class="quantity-controls">
+                                <button data-index="${index}" data-action="decrease" class="quantity-btn" type="button">-</button>
+                                <span class="quantity-value">${quantity}</span>
+                                <button data-index="${index}" data-action="increase" class="quantity-btn" type="button">+</button>
+                            </div>
+                            <button data-index="${index}" class="remove-from-chart-btn remove-btn">Remove</button>
+                        </div>
+                    </div>
+                `;
+            });
+            cartTotal.textContent = `Total: N${formatPrice(total)}`;
+
+            document.querySelectorAll('.remove-from-chart-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const idx = Number(event.target.dataset.index);
+                    cart.splice(idx, 1);
+                    saveCart();
+                    renderCart();
+                });
+            });
+
+            document.querySelectorAll('.quantity-btn').forEach(button => {
+                button.addEventListener('click', async (event) => {
+                    const idx = Number(event.target.dataset.index);
+                    const action = event.target.dataset.action;
+                    const item = cart[idx];
+                    if (!item) return;
+
+                    const currentQuantity = Number(item.quantity) || 1;
+
+                    if (action === 'decrease') {
+                        if (currentQuantity <= 1) {
+                            cart.splice(idx, 1);
+                        } else {
+                            item.quantity = currentQuantity - 1;
+                        }
+                        saveCart();
+                        renderCart();
+                        return;
+                    }
+
+                    if (action === 'increase') {
+                        try {
+                            const productSnapshot = await get(ref(db, `/products/${item.id}`));
+                            const product = productSnapshot.val();
+                            const available = Number(product?.prodQuan) || 0;
+
+                            if (!product || product.approvalStatus === 'pending') {
+                                alert(`Product ${item.prodName || ''} is not currently approved for sale.`);
+                                return;
+                            }
+
+                            if (currentQuantity + 1 > available) {
+                                alert(`Cannot add more than ${available} item${available === 1 ? '' : 's'} of ${item.prodName}.`);
+                                return;
+                            }
+
+                            item.quantity = currentQuantity + 1;
+                            saveCart();
+                            renderCart();
+                        } catch (error) {
+                            console.error(error);
+                            alert('Unable to update quantity. Please try again.');
+                        }
+                    }
+                });
+            });
+        }
+
+        function payWithPaystack(amountKobo, email) {
+            return new Promise((resolve, reject) => {
+                if (typeof PaystackPop === 'undefined') {
+                    reject(new Error('Paystack SDK not loaded.'));
+                    return;
+                }
+                const handler = PaystackPop.setup({
+                    key: 'pk_test_f1a48ecec4052c9e5576c3b546613f669d9d2d9f',
+                    email: email,
+                    amount: amountKobo,
+                    currency: 'NGN',
+                    ref: `SHIFFY_${Math.floor(Math.random() * 1000000000)}`,
+                    callback: (response) => resolve(response),
+                    onClose: () => reject(new Error('Payment window closed.'))
+                });
+                handler.openIframe();
+            });
+        }
+
+        checkoutBtn.addEventListener('click', async () => {
+            if (cart.length === 0) return;
+
+            checkoutBtn.disabled = true;
+            checkoutBtn.textContent = 'Validating stock...';
+
+            try {
+                // Fetch fresh stock check directly from db path
+                const productsRef = ref(db, '/products');
+                const snapshot = await get(productsRef);
+                const latestProducts = snapshot.val() || {};
+
+                for (const item of cart) {
+                    const product = latestProducts[item.id];
+                    const available = Number(product?.prodQuan) || 0;
+                    const requested = Number(item.quantity) || 0;
+                    if (!product || product.approvalStatus === 'pending') {
+                        alert(`Product ${item.prodName || ''} is not currently approved for sale.`);
+                        checkoutBtn.disabled = false;
+                        checkoutBtn.textContent = 'Proceed to Checkout';
+                        return;
+                    }
+                    if (requested > available) {
+                        alert(`Not enough stock for ${item.prodName}. Only ${available} left.`);
+                        checkoutBtn.disabled = false;
+                        checkoutBtn.textContent = 'Proceed to Checkout';
+                        return;
+                    }
+                }
+
+                const totalAmount = cart.reduce((sum, item) => {
+                    return sum + priceNumber(item.prodPrice) * (Number(item.quantity) || 0);
+                }, 0);
+
+                const user = auth.currentUser;
+                const convUserRaw = localStorage.getItem('user');
+                const convUser = convUserRaw ? JSON.parse(convUserRaw) : null;
+                const buyerEmail = user?.email || (convUser?.email || '');
+
+                if (!buyerEmail) {
+                    alert('User email missing. Please log in again.');
+                    checkoutBtn.disabled = false;
+                    checkoutBtn.textContent = 'Proceed to Checkout';
+                    return;
+                }
+
+                checkoutBtn.textContent = 'Processing payment...';
+                const amountKobo = Math.round(totalAmount * 100);
+                await payWithPaystack(amountKobo, buyerEmail);
+
+                // Update stock quantities
+                for (const item of cart) {
+                    const product = latestProducts[item.id];
+                    const currentQuantity = Number(product.prodQuan) || 0;
+                    const newQuantity = Math.max(0, currentQuantity - Number(item.quantity || 0));
+                    await set(ref(db, `/products/${item.id}`), {
+                        ...product,
+                        prodQuan: String(newQuantity)
+                    });
+                }
+
+                alert('Payment successful! Your order is complete.');
+                cart = [];
+                saveCart();
+                renderCart();
+
+            } catch (error) {
+                console.error(error);
+                alert(error?.message || 'Payment processing failed.');
+            } finally {
+                checkoutBtn.disabled = false;
+                checkoutBtn.textContent = 'Proceed to Checkout';
+            }
+        });
+
+        // Initialize state on load
+        onAuthStateChanged(auth, (user) => {
+            renderCart();
+        });
+    </script>
+</body>
+</html>

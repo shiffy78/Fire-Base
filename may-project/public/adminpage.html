@@ -118,12 +118,13 @@
                 <th>Price</th>
                 <th>Quantity</th>
                 <th>Seller</th>
+                <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="productList">
               <tr>
-                <td colspan="5" class="no-data">Loading products...</td>
+                <td colspan="6" class="no-data">Loading products...</td>
               </tr>
             </tbody>
           </table>
@@ -238,7 +239,7 @@
     function renderProducts(products) {
       const tbody = document.getElementById('productList');
       if (products.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="no-data">No products found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="no-data">No products found</td></tr>';
         return;
       }
       tbody.innerHTML = products.map(p => `
@@ -247,7 +248,9 @@
           <td>N${p.prodPrice || '0'}</td>
           <td>${p.prodQuan || '0'}</td>
           <td>${p.email || 'N/A'}</td>
+          <td>${p.approvalStatus === 'pending' ? 'Pending' : 'Approved'}</td>
           <td>
+            ${p.approvalStatus === 'pending' ? `<button class="action-btn" onclick="approveProduct('${p.id}')">Approve</button>` : ''}
             <button class="action-btn btn-delete" onclick="deleteProduct('${p.id}')">Delete</button>
           </td>
         </tr>
@@ -294,6 +297,25 @@
         showAlert('productAlert', 'Product deleted successfully', 'success');
       } catch (e) {
         showAlert('productAlert', 'Error deleting product: ' + e.message);
+      }
+    };
+
+    window.approveProduct = async function(productId) {
+      try {
+        const product = allProducts.find(p => p.id === productId);
+        if (!product) {
+          showAlert('productAlert', 'Product not found.');
+          return;
+        }
+        const { id, ...productData } = product;
+        await set(ref(db, `products/${productId}`), {
+          ...productData,
+          approvalStatus: 'approved',
+          approvedAt: Date.now()
+        });
+        showAlert('productAlert', 'Product approved successfully', 'success');
+      } catch (e) {
+        showAlert('productAlert', 'Error approving product: ' + e.message);
       }
     };
 

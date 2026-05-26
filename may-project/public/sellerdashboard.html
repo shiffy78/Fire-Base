@@ -19,6 +19,9 @@
         .product-form button.secondary {background:#334155;}
         .product-form button:hover {opacity:.93;}
         .product-form .hint {color:#94a3b8;font-size:13px;}
+        .seller-product-actions {display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+        .seller-product-actions button {padding:8px 14px;border:none;border-radius:8px;background:#8b5cf6;color:#fff;font-weight:700;cursor:pointer;transition:opacity .2s ease;}
+        .seller-product-actions button:hover {opacity:.93;}
     </style>
 </head>
 
@@ -55,7 +58,7 @@
                 </label>
                 <label>
                     Price (N)
-                    <input id="prodPrice" type="number" min="0" placeholder="Enter product price">
+                    <input id="prodPrice" type="text" inputmode="decimal" placeholder="Enter product price">
                 </label>
                 <label>
                     Image URL
@@ -66,7 +69,7 @@
                     <input id="prodQuan" type="number" min="0" placeholder="Enter product quantity">
                 </label>
             </div>
-            <div class="product-form-actions">
+            <div class="product-form-actions" style="margin-top: 20px !important;">
                 <button id="addProd">Add Product</button>
                 <button id="cancelEdit" class="secondary hidden" type="button">Cancel</button>
             </div>
@@ -84,7 +87,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
-        import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+        import { getDatabase, ref, set, onValue, remove, get } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCsTmvrLR0HVnbaGUaYZ_yLrfcNevfaZTs",
@@ -114,9 +117,42 @@
 
         let editingKey = null;
 
-        onAuthStateChanged(auth, (user) => {
+        function ownsProduct(product) {
+            const user = auth.currentUser;
+            if (!user || !product) return false;
+            return product.id === user.uid || product.email === user.email;
+        }
+
+        function cleanPrice(value) {
+            return String(value || '').replace(/,/g, '').replace(/[^\d.]/g, '');
+        }
+
+        function formatPrice(value) {
+            const cleaned = cleanPrice(value);
+            if (!cleaned) return '';
+            const parts = cleaned.split('.');
+            const whole = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return parts.length > 1 ? `${whole}.${parts.slice(1).join('')}` : whole;
+        }
+
+        onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 window.location.href = "/index.html";
+                return;
+            }
+
+            try {
+                const userSnapshot = await get(ref(db, `users/${user.uid}`));
+                const userRole = userSnapshot.val()?.role || '';
+                if (userRole !== 'seller') {
+                    alert('Only seller accounts can access the seller dashboard.');
+                    window.location.href = './buyerdashboard.html';
+                    return;
+                }
+            } catch (e) {
+                console.error('Could not verify seller role', e);
+                alert('Unable to verify seller access. Please try again.');
+                window.location.href = './buyerdashboard.html';
                 return;
             }
 
@@ -134,6 +170,8 @@
             } catch (e) {
                 console.warn('Could not set local user from auth state', e);
             }
+
+            renderProducts(searchInput ? searchInput.value : '');
         });
 
         function clearForm() {
@@ -155,7 +193,7 @@
             }
 
                 const name = prodNameInput.value.trim();
-                const price = prodPriceInput.value.trim();
+                const price = cleanPrice(prodPriceInput.value);
                 const image = prodImgInput.value.trim();
                 const quantity = prodQuanInput.value.trim();
 
@@ -164,15 +202,24 @@
                     return;
                 }
 
+                if (editingKey && !ownsProduct(latestProducts[editingKey])) {
+                    alert('You can only update products you posted.');
+                    clearForm();
+                    return;
+                }
+
                 const productKey = editingKey || Date.now().toString();
                 const dbRef = ref(db, `/products/${productKey}`);
+                const existingProduct = editingKey ? (latestProducts[editingKey] || {}) : {};
                 const storedProd = {
+                    ...existingProduct,
                     prodName: name,
                     prodImg: image,
                     prodPrice: price,
                     prodQuan: quantity,
                     id: user.uid,
-                    email: user.email
+                    email: user.email,
+                    approvalStatus: 'pending'
                 };
 
                 set(dbRef, storedProd).then(() => {
@@ -198,8 +245,12 @@
 
             if (button.dataset.action === 'edit') {
                 const item = JSON.parse(button.dataset.item);
+                if (!ownsProduct(item)) {
+                    alert('You can only edit products you posted.');
+                    return;
+                }
                 prodNameInput.value = item.prodName || '';
-                prodPriceInput.value = item.prodPrice || '';
+                prodPriceInput.value = formatPrice(item.prodPrice);
                 prodImgInput.value = item.prodImg || '';
                 prodQuanInput.value = item.prodQuan || '';
                 editingKey = key;
@@ -210,6 +261,11 @@
             }
 
             if (button.dataset.action === 'delete') {
+                const item = latestProducts[key];
+                if (!ownsProduct(item)) {
+                    alert('You can only delete products you posted.');
+                    return;
+                }
                 if (!confirm('Delete this product?')) return;
                 const dbRef = ref(db, `/products/${key}`);
                 remove(dbRef).catch((error) => {
@@ -227,7 +283,7 @@
 
         function renderProducts(query) {
             const q = (query || '').toLowerCase().trim();
-            const items = Object.entries(latestProducts || {});
+            const items = Object.entries(latestProducts || {}).filter(([, item]) => ownsProduct(item));
             if (items.length === 0) {
                 prods.innerHTML = '<p>No products yet.</p>';
                 return;
@@ -246,24 +302,152 @@
 
             prods.innerHTML = '';
             filtered.forEach(([key, item]) => {
-                const isOwner = auth.currentUser && auth.currentUser.email === item.email;
                 prods.innerHTML += `
-                    <div class="product-card">
+                    <div class="product-card" style="opacity:${item.approvalStatus === 'pending' ? 0.6 : 1}; max-width:200px !important; display:flex; flex-direction:column; align-items:center; text-align:center;">
                         <img src="${item.prodImg || ''}" alt="Product Image">
                         <h4>${item.prodName || ''}</h4>
-                        <p>${item.prodPrice ? 'N ' + item.prodPrice : ''}</p>
-                        <div>Quantity: ${item.prodQuan || ''}</div>
-                        ${isOwner ? `
-                            <div style="margin-top:8px;"><button data-action="edit" data-key="${key}" data-item='${JSON.stringify(item).replace(/'/g, "&#39;")}'>edit</button>
-                            <button data-action="delete" data-key="${key}">delete</button></div>
-                        ` : ''}
+                        <p style="flex: 1 !important;">${item.prodPrice ? 'N ' + formatPrice(item.prodPrice) : ''}</p>
+                        <div class="product-quantity">Quantity: ${item.prodQuan ?? '0'}</div>
+                        <div class="product-quantity">Status: ${item.approvalStatus === 'pending' ? 'Pending approval' : 'Approved'}</div>
+                       <div>
+                        <div  class="seller-product-actions"><button data-action="edit" data-key="${key}" data-item='${JSON.stringify(item).replace(/'/g, "&#39;")}'>edit</button>
+                        <button data-action="delete" data-key="${key}">delete</button></div>
+                        </div>
                     </div>
                 `;
             });
         }
 
+        prodPriceInput.addEventListener('input', () => {
+            prodPriceInput.value = formatPrice(prodPriceInput.value);
+        });
+
         if (searchInput) searchInput.addEventListener('input', (e) => renderProducts(e.target.value));
     </script>
+
+    <!-- FOOTER HTML -->
+<footer class="footer">
+    <div class="footer-container">
+
+        <div class="footer-box">
+            <h2>Shiffy Mart</h2>
+            <p>
+                Your trusted online marketplace for quality phones,
+                gadgets, and accessories.
+            </p>
+        </div>
+
+        <!-- <div class="footer-box">
+            <h3>Quick Links</h3>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+                <li><a href="products.html">Products</a></li>
+            </ul>
+        </div> -->
+
+        <div class="footer-box">
+            <h3>Contact Info</h3>
+            <p>Email: support@shiffy78@gmail.com</p>
+            <p>Phone: +234 8134610526</p>
+            <p>Lagos, Nigeria</p>
+        </div>
+
+        <div class="footer-box">
+            <h3>Follow Us</h3>
+            <div class="social-links">
+                <a href="#">Facebook</a>
+                <a href="#">Instagram</a>
+                <a href="#">Twitter</a>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer-bottom">
+        <p>&copy; 2026 Shiffy Mart. All Rights Reserved.</p>
+    </div>
+</footer>
+
+
+<!-- FOOTER CSS -->
+<style>
+    .footer {
+        background: #111;
+        color: #fff;
+        padding-top: 50px;
+        margin-top: 60px;
+        border-top: 1px solid #222;
+    }
+
+    .footer-container {
+        width: 90%;
+        max-width: 1200px;
+        margin: auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 30px;
+        padding-bottom: 40px;
+    }
+
+    .footer-box h2,
+    .footer-box h3 {
+        color:  #8b5cf6;
+        margin-bottom: 15px;
+    }
+
+    .footer-box p {
+        color: #ccc;
+        line-height: 1.7;
+        margin-bottom: 10px;
+    }
+
+    .footer-box ul {
+        list-style: none;
+    }
+
+    .footer-box ul li {
+        margin-bottom: 10px;
+    }
+
+    .footer-box ul li a,
+    .social-links a {
+        color: #ccc;
+        text-decoration: none;
+        transition: 0.3s ease;
+    }
+
+    .footer-box ul li a:hover,
+    .social-links a:hover {
+        color:  #8b5cf6;
+    }
+
+    .social-links {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .footer-bottom {
+        text-align: center;
+        padding: 20px;
+        border-top: 1px solid #222;
+        color: #aaa;
+        font-size: 0.95rem;
+    }
+
+    @media (max-width: 768px) {
+        .footer-container {
+            text-align: center;
+        }
+
+        .social-links {
+            align-items: center;
+        }
+    }
+</style>
+
 </body>
 
 </html>

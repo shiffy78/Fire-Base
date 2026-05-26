@@ -1,0 +1,122 @@
+<!-- FOOTER HTML -->
+<footer class="footer">
+    <div class="footer-container">
+
+        <div class="footer-box">
+            <h2>Tech Connect</h2>
+            <p>
+                Your trusted online marketplace for quality phones,
+                gadgets, and accessories.
+            </p>
+        </div>
+
+        <!-- <div class="footer-box">
+            <h3>Quick Links</h3>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About Us</a></li>
+                <li><a href="contact.html">Contact Us</a></li>
+                <li><a href="products.html">Products</a></li>
+            </ul>
+        </div> -->
+
+        <div class="footer-box">
+            <h3>Contact Info</h3>
+            <p>Email: support@techconnect.com</p>
+            <p>Phone: +234 800 000 0000</p>
+            <p>Lagos, Nigeria</p>
+        </div>
+
+        <div class="footer-box">
+            <h3>Follow Us</h3>
+            <div class="social-links">
+                <a href="#">Facebook</a>
+                <a href="#">Instagram</a>
+                <a href="#">Twitter</a>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer-bottom">
+        <p>&copy; 2026 Tech Connect. All Rights Reserved.</p>
+    </div>
+</footer>
+
+
+<!-- FOOTER CSS -->
+<style>
+    .footer {
+        background: #111;
+        color: #fff;
+        padding-top: 50px;
+        margin-top: 60px;
+        border-top: 1px solid #222;
+    }
+
+    .footer-container {
+        width: 90%;
+        max-width: 1200px;
+        margin: auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 30px;
+        padding-bottom: 40px;
+    }
+
+    .footer-box h2,
+    .footer-box h3 {
+        color: #00bfff;
+        margin-bottom: 15px;
+    }
+
+    .footer-box p {
+        color: #ccc;
+        line-height: 1.7;
+        margin-bottom: 10px;
+    }
+
+    .footer-box ul {
+        list-style: none;
+    }
+
+    .footer-box ul li {
+        margin-bottom: 10px;
+    }
+
+    .footer-box ul li a,
+    .social-links a {
+        color: #ccc;
+        text-decoration: none;
+        transition: 0.3s ease;
+    }
+
+    .footer-box ul li a:hover,
+    .social-links a:hover {
+        color: #00bfff;
+    }
+
+    .social-links {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .footer-bottom {
+        text-align: center;
+        padding: 20px;
+        border-top: 1px solid #222;
+        color: #aaa;
+        font-size: 0.95rem;
+    }
+
+    @media (max-width: 768px) {
+        .footer-container {
+            text-align: center;
+        }
+
+        .social-links {
+            align-items: center;
+        }
+    }
+</style>

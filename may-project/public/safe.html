@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buyer Account</title>
+    <link rel="stylesheet" href="index.css">
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">
+            <h2>SHIFFY MART ENTERPRISE</h2>
+        </div>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="contact.html">Contact</a>
+        </nav>
+        <div class="nav-btns">
+            <button id="viewProfile" class="login">Profile</button>
+            <button id="signOut" class="signup">Sign Out</button>
+        </div>
+    </header>
+
+    <section class="products">
+        <div class="section-title">
+            <h2>Available Products</h2>
+        </div>
+        <div style="margin:12px 0;">
+            <input id="searchInput" placeholder="Search products by name"
+                style="width:20%;padding:10px;border-radius:8px;border:1px solid #ccc;">
+        </div>
+        <div class="product-grid" id="prods"></div>
+        <div id="cart" style="margin-top:24px; border-top:1px solid #ccc; padding-top:16px;">
+            <h2>Your Cart</h2>
+            <div id="cartItems"></div>
+            <p id="cartTotal">Total: N0</p>
+            <button id="checkoutBtn" type="button"
+                style="padding:10px 18px; background:#28a745; color:white; border:none; border-radius:6px; cursor:pointer;">Checkout</button>
+        </div>
+
+
+        <script type="module">
+            import User from "./user.js"
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+            import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+            import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+
+            const firebaseConfig = {
+                apiKey: "AIzaSyCsTmvrLR0HVnbaGUaYZ_yLrfcNevfaZTs",
+                authDomain: "may-project-16ddf.firebaseapp.com",
+                databaseURL: "https://may-project-16ddf-default-rtdb.europe-west1.firebasedatabase.app",
+                projectId: "may-project-16ddf",
+                storageBucket: "may-project-16ddf.firebasestorage.app",
+                messagingSenderId: "222286807201",
+                appId: "1:222286807201:web:66cd70b45f3957fd36f0e0"
+            };
+
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getDatabase(app);
+
+            const prods = document.getElementById('prods');
+            const cartItems = document.getElementById('cartItems');
+            const cartTotal = document.getElementById('cartTotal');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            const searchInput = document.getElementById('searchInput');
+
+            let cart = JSON.parse(localStorage.getItem('buyerCart') || '[]');
+            let latestProducts = {};
+
+            function saveCart() {
+                localStorage.setItem('buyerCart', JSON.stringify(cart));
+            }
+
+            function renderCart() {
+                if (cart.length === 0) {
+                    cartItems.innerHTML = '<p>Your cart is empty.</p>';
+                    cartTotal.textContent = 'Total: N0';
+                    return;
+                }
+                let total = 0;
+                cartItems.innerHTML = '';
+                cart.forEach((item, index) => {
+                    const price = parseFloat(item.prodPrice) || 0;
+                    const quantity = item.quantity || 1;
+                    total += price * quantity;
+                    cartItems.innerHTML += `
+                    <div style="border:1px solid #ddd;padding:8px;margin:8px 0;">
+                        <strong>${item.prodName || 'Product'}</strong><br>
+                        Price: N${price.toFixed(2)} x ${quantity}<br>
+                        <button data-index="${index}" class="removeFromCart" style="margin-top:6px;padding:6px 10px;">Remove</button>
+                    </div>
+                `;
+                });
+                cartTotal.textContent = `Total: N${total.toFixed(2)}`;
+                document.querySelectorAll('.removeFromCart').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const idx = Number(event.target.dataset.index);
+                        cart.splice(idx, 1);
+                        saveCart();
+                        renderCart();
+                    });
+                });
+            }
+
+            function addToCart(product) {
+                const available = Number(latestProducts[product.id]?.prodQuan ?? product.prodQuan) || 0;
+                const existing = cart.find(item => item.id === product.id && item.prodName === product.prodName);
+                const currentQuantity = existing ? Number(existing.quantity || 0) : 0;
+                if (currentQuantity + 1 > available) {
+                    alert(`Cannot add more than ${available} item${available === 1 ? '' : 's'} of ${product.prodName}.`);
+                    return;
+                }
+
+                if (existing) {
+                    existing.quantity = currentQuantity + 1;
+                } else {
+                    cart.push({ ...product, quantity: 1 });
+                }
+                saveCart();
+                renderCart();
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                if (!user) {
+                    window.location.href = 'loginpage.html';
+                    return;
+                }
+
+                // ensure localStorage user exists
+                try {
+                    const localUser = { fullname: user.displayName || (user.email ? user.email.split('@')[0] : ''), email: user.email || '', picture: user.photoURL || 'https://via.placeholder.com/100', id: user.uid };
+                    localStorage.setItem('user', JSON.stringify(localUser));
+                } catch (e) { console.warn('localStorage set failed', e); }
+
+                renderCart();
+
+                const dbRef = ref(db, '/products');
+                onValue(dbRef, (snapshot) => {
+                    const data = snapshot.val();
+                    console.log('products snapshot:', data);
+
+                    latestProducts = data || {};
+                    renderProducts(searchInput ? searchInput.value : '');
+                });
+            });
+
+            // Ensure localStorage user exists and render currentUser safely
+            const convUserRaw = localStorage.getItem('user');
+            const convUser = convUserRaw ? JSON.parse(convUserRaw) : null;
+            if (convUser) {
+                // User profile is stored in localStorage for other pages, but not rendered here.
+            } else {
+                // No profile display needed on buyer dashboard.
+            }
+
+            document.getElementById("viewProfile").addEventListener('click', () => { window.location.href = './profile.html'; });
+
+            document.getElementById("signOut").addEventListener("click", () => {
+                signOut(auth).then(() => {
+                    window.location.href = 'loginpage.html';
+                }).catch((error) => {
+                    console.error(error);
+                    alert('Error signing out.');
+                });
+            });
+
+            function payWithPaystack(amountKobo, email) {
+                return new Promise((resolve, reject) => {
+                    if (typeof PaystackPop === 'undefined') {
+                        reject(new Error('Paystack SDK not loaded.'));
+                        return;
+                    }
+
+                    const handler = PaystackPop.setup({
+                        key: 'pk_test_f1a48ecec4052c9e5576c3b546613f669d9d2d9f',
+                        email: email,
+                        amount: amountKobo,
+                        currency: 'NGN',
+                        ref: `SHIFFY_${Math.floor(Math.random() * 1000000000)}`,
+                        callback: function(response) {
+                            resolve(response);
+                        },
+                        onClose: function() {
+                            reject(new Error('Payment window closed.'));
+                        }
+                    });
+
+                    handler.openIframe();
+                });
+            }
+
+            async function handleCheckout() {
+                if (cart.length === 0) {
+                    alert('Your cart is empty.');
+                    return;
+                }
+
+                // Validate availability before checkout
+                for (const item of cart) {
+                    const product = latestProducts[item.id];
+                    const available = Number(product?.prodQuan) || 0;
+                    const requested = Number(item.quantity) || 0;
+                    if (!product) {
+                        alert(`Product ${item.prodName || ''} is no longer available.`);
+                        return;
+                    }
+                    if (requested > available) {
+                        alert(`Not enough stock for ${item.prodName}. Only ${available} left.`);
+                        return;
+                    }
+                }
+
+                const totalAmount = cart.reduce((sum, item) => {
+                    const price = parseFloat(item.prodPrice) || 0;
+                    const quantity = Number(item.quantity) || 0;
+                    return sum + price * quantity;
+                }, 0);
+
+                const user = auth.currentUser;
+                const buyerEmail = user?.email || (convUser?.email || '');
+                if (!buyerEmail) {
+                    alert('Buyer email is required for payment.');
+                    return;
+                }
+
+                const amountKobo = Math.round(totalAmount * 100);
+                checkoutBtn.disabled = true;
+                checkoutBtn.textContent = 'Processing payment...';
+
+                try {
+                    await payWithPaystack(amountKobo, buyerEmail);
+
+                    for (const item of cart) {
+                        const product = latestProducts[item.id];
+                        const currentQuantity = Number(product.prodQuan) || 0;
+                        const newQuantity = Math.max(0, currentQuantity - Number(item.quantity || 0));
+                        const productRef = ref(db, `/products/${item.id}`);
+                        await set(productRef, {
+                            ...product,
+                            prodQuan: String(newQuantity)
+                        });
+                    }
+
+                    alert('Payment successful! Your order is complete.');
+                    cart = [];
+                    saveCart();
+                    renderCart();
+                } catch (error) {
+                    console.error('Payment or checkout failed', error);
+                    alert(error?.message || 'Payment failed. Please try again.');
+                } finally {
+                    checkoutBtn.disabled = false;
+                    checkoutBtn.textContent = 'Checkout';
+                }
+            }
+
+            checkoutBtn.addEventListener('click', handleCheckout);
+
+            // Render products with optional filter
+            function renderProducts(query) {
+                const q = (query || '').toLowerCase().trim();
+                const items = Object.entries(latestProducts || {});
+                if (items.length === 0) {
+                    prods.innerHTML = '<p>No products available.</p>';
+                    return;
+                }
+
+                const filtered = q ? items.filter(([k, item]) => {
+                    const name = (item.prodName || '').toLowerCase();
+                    const seller = (item.email || '').toLowerCase();
+                    return name.includes(q) || seller.includes(q);
+                }) : items;
+
+                if (filtered.length === 0) {
+                    prods.innerHTML = '<p>No matching products.</p>';
+                    return;
+                }
+
+                prods.innerHTML = '';
+                filtered.forEach(([key, item]) => {
+                    const available = Number(item.prodQuan) > 0;
+                    const cardHtml = `
+                    <div class="product-card">
+                        <img src="${item.prodImg || ''}" alt="Product Image">
+                        <h4>${item.prodName || 'No name'}</h4>
+                        <p>${item.prodPrice ? 'N ' + item.prodPrice : ''}</p>
+                        <div>Quantity: ${item.prodQuan || '0'}</div>
+                        <div style="margin-top:8px;"><button data-key="${key}" ${available ? '' : 'disabled'} style="padding:8px 12px;">${available ? 'Add to Cart' : 'Sold out'}</button></div>
+                    </div>
+                `;
+                    prods.innerHTML += cardHtml;
+                });
+
+                prods.querySelectorAll('button[data-key]').forEach((button) => {
+                    button.addEventListener('click', () => {
+                        const productKey = button.dataset.key;
+                        const product = latestProducts[productKey];
+                        if (product) {
+                            addToCart({ ...product, id: productKey });
+                        }
+                    });
+                });
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    renderProducts(e.target.value);
+                });
+            }
+
+        </script>
+</body>
+
+</html>
