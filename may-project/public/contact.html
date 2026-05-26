@@ -62,6 +62,32 @@
             color: #8b5cf6;
         }
 
+        .nav-btns {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+
+        .login,
+        .signup {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .login {
+            background: #222;
+            color: white;
+        }
+
+        .signup {
+            background: #8b5cf6;
+            color: white;
+        }
+
         .header-content {
             text-align: center;
         }
@@ -207,7 +233,10 @@
                     <a href="index.html">Home</a>
                     <a href="about.html">About Us</a>
                 </nav>
-                <div></div>
+                <div class="nav-btns" id="authNav" style="display:none;">
+                    <button id="viewProfile" class="login">Profile</button>
+                    <button id="signOut" class="signup">Sign Out</button>
+                </div>
             </div>
 
             <div class="header-content">
@@ -372,6 +401,39 @@
         }
     }
 </style>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCsTmvrLR0HVnbaGUaYZ_yLrfcNevfaZTs",
+        authDomain: "may-project-16ddf.firebaseapp.com",
+        databaseURL: "https://may-project-16ddf-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "may-project-16ddf",
+        storageBucket: "may-project-16ddf.firebasestorage.app",
+        messagingSenderId: "222286807201",
+        appId: "1:222286807201:web:66cd70b45f3957fd36f0e0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const authNav = document.getElementById('authNav');
+
+    document.getElementById('viewProfile').addEventListener('click', () => {
+        window.location.href = './profile.html';
+    });
+
+    document.getElementById('signOut').addEventListener('click', async () => {
+        await signOut(auth);
+        try { localStorage.removeItem('user'); } catch (e) {}
+        window.location.href = './loginpage.html';
+    });
+
+    onAuthStateChanged(auth, (user) => {
+        authNav.style.display = user ? 'flex' : 'none';
+    });
+</script>
 
 </body>
 </html>

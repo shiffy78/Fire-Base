@@ -217,6 +217,9 @@ nav a:hover{
     padding: 20px;
     border-radius: 12px;
     transition: 0.3s;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
 }
 
 .product-card:hover{
@@ -238,6 +241,7 @@ nav a:hover{
 .product-card p{
     color: #8b5cf6;
     margin-bottom: 10px;
+    margin-top: auto;
 }
 
 .product-quantity{

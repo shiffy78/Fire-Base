@@ -18,11 +18,16 @@
         .quantity-value { min-width: 24px; text-align: center; color: #222; font-weight: bold; }
         .remove-btn { background: #dc3545; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; }
         .back-btn { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #007bff; font-weight: bold; }
+        .nav-btns { display: flex; align-items: center; gap: 15px; }
+        .login, .signup { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .login { background: #222; color: white; }
+        .signup { background: #8b5cf6; color: white; }
 
         @media (max-width: 520px) {
             .chart-item-row { align-items: flex-start; flex-direction: column; }
             .chart-item-actions { width: 100%; justify-content: space-between; }
             .chart-item-image { width: 58px; height: 58px; flex-basis: 58px; }
+            .nav-btns { flex-wrap: wrap; justify-content: center; }
         }
     </style>
 </head>
@@ -38,11 +43,15 @@
             <a href="about.html">About</a>
             <a href="contact.html">Contact</a>
         </nav>
+        <div class="nav-btns">
+            <button id="viewProfile" class="login">Profile</button>
+            <button id="signOut" class="signup">Sign Out</button>
+        </div>
     </header>
 
     <main class="chart-view-container">
         <a href="buyerdashboard.html" class="back-btn">← Back to Store</a>
-        <h2>Items in Your Chart</h2>
+        <h2>Items in Your Cart</h2>
         
         <div id="cartItems"></div>
         
@@ -54,7 +63,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
         import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
         const firebaseConfig = {
@@ -74,6 +83,8 @@
         const cartItems = document.getElementById('cartItems');
         const cartTotal = document.getElementById('cartTotal');
         const checkoutBtn = document.getElementById('checkoutBtn');
+        const viewProfileButton = document.getElementById('viewProfile');
+        const signOutButton = document.getElementById('signOut');
 
         let cart = JSON.parse(localStorage.getItem('buyerCart') || '[]');
 
@@ -97,9 +108,23 @@
             localStorage.setItem('buyerCart', JSON.stringify(cart));
         }
 
+        viewProfileButton.addEventListener('click', () => {
+            window.location.href = './profile.html';
+        });
+
+        signOutButton.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                localStorage.removeItem('user');
+            } catch (e) {
+                console.error(e);
+            }
+            window.location.href = './loginpage.html';
+        });
+
         function renderCart() {
             if (cart.length === 0) {
-                cartItems.innerHTML = '<p style="padding: 20px 0; color: #666;">Your chart is currently empty.</p>';
+                cartItems.innerHTML = '<p style="padding: 20px 0; color: #666;">Your cart is currently empty.</p>';
                 cartTotal.textContent = 'Total: N0';
                 checkoutBtn.style.display = 'none';
                 return;

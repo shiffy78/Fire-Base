@@ -56,6 +56,31 @@ body{
     color: #8b5cf6;
 }
 
+.nav-btns {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.login,
+.signup {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.login {
+    background: #222;
+    color: white;
+}
+
+.signup {
+    background: #8b5cf6;
+    color: white;
+}
+
 .header h1{
     font-size: 50px;
     color: #8b5cf6;
@@ -120,5 +145,10 @@ body{
     .nav-links {
         position: static;
         transform: none;
+    }
+
+    .nav-btns {
+        flex-wrap: wrap;
+        justify-content: center;
     }
 }
